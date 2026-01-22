@@ -3,46 +3,514 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Interactive Deck</title>
+    <title>Decks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/black.css" />
     <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
     <style>
-      body { background: #0b0f14; }
+      :root {
+        --navy: #002244;
+        --green: #69be28;
+        --gray: #a5acaf;
+        --ink: #0b0f14;
+        --foam: #eaf7ee;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(1200px 800px at 10% -10%, rgba(105, 190, 40, 0.25), transparent 60%),
+          radial-gradient(900px 700px at 90% 0%, rgba(0, 34, 68, 0.85), transparent 55%),
+          linear-gradient(135deg, #050f16, var(--ink) 65%);
+        color: var(--foam);
+        font-family: "Space Grotesk", sans-serif;
+        min-height: 100vh;
+      }
+      body.deck-mode {
+        background: var(--ink);
+      }
+      body.reveal-fallback {
+        overflow-y: auto;
+      }
+      body.reveal-fallback .reveal {
+        visibility: visible;
+      }
+      body.reveal-fallback .reveal {
+        height: auto;
+      }
+      body.deck-empty .reveal {
+        display: none;
+      }
+      body.deck-empty .deck-fallback {
+        display: flex;
+      }
+      .deck-fallback {
+        display: none;
+        min-height: 100vh;
+        padding: 24px;
+        gap: 16px;
+        flex-direction: column;
+        background: var(--ink);
+      }
+      .deck-fallback .fallback-title {
+        font-family: "Anton", sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: clamp(1.8rem, 3vw, 2.6rem);
+        margin: 0 0 6px;
+      }
+      .deck-fallback .fallback-note {
+        color: var(--gray);
+        margin: 0 0 12px;
+      }
+      .deck-fallback .fallback-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+      }
+      .deck-fallback .fallback-card {
+        border-radius: 16px;
+        border: 1px solid rgba(105, 190, 40, 0.3);
+        background: rgba(0, 34, 68, 0.55);
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .deck-fallback .fallback-card iframe {
+        width: 100%;
+        height: 320px;
+        border: 0;
+        border-radius: 12px;
+      }
+      body.reveal-fallback .reveal .slides {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        pointer-events: auto;
+        overflow: hidden;
+      }
+      body.reveal-fallback .reveal .slides > section {
+        display: none;
+        position: absolute;
+        inset: 0;
+        opacity: 1;
+        transform: none;
+        margin: 0;
+        padding: 22px 24px 24px;
+        flex-direction: column;
+        gap: 12px;
+      }
+      body.reveal-fallback .reveal .slides > section.is-active {
+        display: flex;
+      }
+      body.reveal-fallback .frame {
+        height: auto;
+        flex: 1;
+        border-radius: 0;
+      }
+      .fallback-nav {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: rgba(0, 34, 68, 0.75);
+        border-radius: 999px;
+        border: 1px solid rgba(105, 190, 40, 0.35);
+        box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+        z-index: 20;
+      }
+      body.reveal-fallback .fallback-nav {
+        display: flex;
+      }
+      .fallback-nav button {
+        background: transparent;
+        border: 1px solid rgba(105, 190, 40, 0.5);
+        color: var(--foam);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .fallback-nav button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .fallback-nav .fallback-count {
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--gray);
+      }
+      .hidden {
+        display: none;
+      }
+      .home {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px;
+      }
+      .home-shell {
+        width: min(1100px, 100%);
+      }
+      .eyebrow {
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        color: var(--gray);
+      }
+      .home-title {
+        font-family: "Anton", sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: clamp(2.4rem, 5vw, 4.6rem);
+        margin: 8px 0 12px;
+      }
+      .home-subtitle {
+        max-width: 560px;
+        color: var(--gray);
+        line-height: 1.6;
+      }
+      .deck-grid {
+        margin-top: 32px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+      }
+      .deck-card {
+        text-decoration: none;
+        color: inherit;
+        background: linear-gradient(135deg, rgba(0, 34, 68, 0.9), rgba(5, 15, 22, 0.95));
+        border-radius: 18px;
+        padding: 20px 22px;
+        border: 1px solid rgba(105, 190, 40, 0.35);
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+        transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+      }
+      .deck-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--green);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45);
+      }
+      .deck-card h3 {
+        margin: 0 0 10px;
+        font-size: 1.4rem;
+      }
+      .deck-card p {
+        margin: 0;
+        color: var(--gray);
+        line-height: 1.5;
+      }
       .frame {
         width: 100%;
-        height: 80vh;
+        height: 78vh;
         border: 0;
         border-radius: 16px;
         background: transparent;
       }
+      .slide-title {
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.75rem;
+        color: var(--gray);
+        margin-bottom: 12px;
+      }
+      .error {
+        max-width: 600px;
+        padding: 24px;
+        background: rgba(0, 34, 68, 0.65);
+        border-radius: 16px;
+        border: 1px solid rgba(105, 190, 40, 0.3);
+      }
     </style>
   </head>
   <body>
-    <div class="reveal">
+    <div id="home" class="home hidden"></div>
+    <div class="reveal hidden" id="deck">
       <div class="slides" id="slides"></div>
+    </div>
+    <div class="deck-fallback" id="deckFallback"></div>
+    <div class="fallback-nav" id="fallbackNav">
+      <button type="button" id="fallbackPrev">Prev</button>
+      <div class="fallback-count" id="fallbackCount"></div>
+      <button type="button" id="fallbackNext">Next</button>
     </div>
 
     <script>
+      const homeEl = document.getElementById("home");
+      const deckEl = document.getElementById("deck");
       const slidesEl = document.getElementById("slides");
+      const deckFallbackEl = document.getElementById("deckFallback");
+      const fallbackNav = document.getElementById("fallbackNav");
+      const fallbackPrev = document.getElementById("fallbackPrev");
+      const fallbackNext = document.getElementById("fallbackNext");
+      const fallbackCount = document.getElementById("fallbackCount");
+      const params = new URLSearchParams(window.location.search);
+      const requestedId = params.get("deck");
+      let fallbackActive = false;
+      let fallbackIndex = 0;
+      let fallbackSlides = [];
 
-      fetch("./slides.json")
-        .then(r => r.json())
-        .then(slides => {
-          slidesEl.innerHTML = slides.map(s => `
-            <section>
-              <h2 style="margin-bottom:16px;">${s.title}</h2>
-              <iframe class="frame" src="${s.src}" allow="fullscreen"></iframe>
-            </section>
-          `).join("");
-
-          Reveal.initialize({
-            hash: true,
-            controls: true,
-            progress: true,
-            transition: "slide"
-          });
+      function updateFallbackNav() {
+        if (!fallbackActive) {
+          return;
+        }
+        fallbackSlides.forEach((slide, index) => {
+          slide.classList.toggle("is-active", index === fallbackIndex);
         });
+        fallbackPrev.disabled = fallbackIndex === 0;
+        fallbackNext.disabled = fallbackIndex >= fallbackSlides.length - 1;
+        fallbackCount.textContent = `${fallbackIndex + 1} / ${fallbackSlides.length}`;
+      }
+
+      function applyRevealFallback() {
+        document.body.classList.add("reveal-fallback");
+        fallbackSlides = Array.from(slidesEl.querySelectorAll("section"));
+        if (fallbackSlides.length === 0) {
+          return;
+        }
+        fallbackActive = true;
+        fallbackIndex = Math.min(fallbackIndex, fallbackSlides.length - 1);
+        updateFallbackNav();
+      }
+
+      function resetFallback() {
+        fallbackActive = false;
+        fallbackIndex = 0;
+        fallbackSlides.forEach(slide => slide.classList.remove("is-active"));
+        fallbackSlides = [];
+      }
+
+      function disableFallback() {
+        document.body.classList.remove("reveal-fallback");
+        document.body.classList.remove("deck-empty");
+        resetFallback();
+      }
+
+      function hasVisibleSlide() {
+        const sections = slidesEl.querySelectorAll("section");
+        for (const section of sections) {
+          const rect = section.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function ensureSlideVisible() {
+        if (slidesEl.querySelector("section.present")) {
+          disableFallback();
+          return;
+        }
+        if (!hasVisibleSlide()) {
+          applyRevealFallback();
+        }
+      }
+
+      function handleFallbackKey(event) {
+        if (!fallbackActive) {
+          return;
+        }
+        if (event.key === "ArrowLeft") {
+          fallbackIndex = Math.max(0, fallbackIndex - 1);
+          updateFallbackNav();
+        }
+        if (event.key === "ArrowRight") {
+          fallbackIndex = Math.min(fallbackSlides.length - 1, fallbackIndex + 1);
+          updateFallbackNav();
+        }
+      }
+
+      fallbackPrev.addEventListener("click", () => {
+        if (!fallbackActive) {
+          return;
+        }
+        fallbackIndex = Math.max(0, fallbackIndex - 1);
+        updateFallbackNav();
+      });
+
+      fallbackNext.addEventListener("click", () => {
+        if (!fallbackActive) {
+          return;
+        }
+        fallbackIndex = Math.min(fallbackSlides.length - 1, fallbackIndex + 1);
+        updateFallbackNav();
+      });
+
+      document.addEventListener("keydown", handleFallbackKey);
+
+      function showHome(decks) {
+        document.body.classList.remove("deck-mode");
+        document.body.classList.remove("reveal-fallback");
+        document.body.classList.remove("deck-empty");
+        resetFallback();
+        deckEl.classList.add("hidden");
+        deckFallbackEl.classList.add("hidden");
+        homeEl.classList.remove("hidden");
+        homeEl.innerHTML = `
+          <div class="home-shell">
+            <div class="eyebrow">Interactive Decks</div>
+            <div class="home-title">Choose a deck</div>
+            <div class="home-subtitle">Open a deck to launch its Reveal shell and full-bleed interactive slides.</div>
+            <div class="deck-grid">
+              ${decks
+                .map(
+                  deck => `
+                    <a class="deck-card" href="?deck=${deck.id}">
+                      <h3>${deck.title}</h3>
+                      <p>${deck.description || ""}</p>
+                    </a>
+                  `
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      function showError(message) {
+        document.body.classList.remove("deck-mode");
+        document.body.classList.remove("reveal-fallback");
+        document.body.classList.remove("deck-empty");
+        resetFallback();
+        deckEl.classList.add("hidden");
+        deckFallbackEl.classList.add("hidden");
+        homeEl.classList.remove("hidden");
+        homeEl.innerHTML = `
+          <div class="error">
+            <strong>Deck load error</strong>
+            <p>${message}</p>
+          </div>
+        `;
+      }
+
+      function loadDeck(deck) {
+        document.body.classList.add("deck-mode");
+        document.body.classList.remove("reveal-fallback");
+        document.body.classList.remove("deck-empty");
+        resetFallback();
+        homeEl.classList.add("hidden");
+        deckEl.classList.remove("hidden");
+        deckFallbackEl.classList.add("hidden");
+        document.title = deck.title || "Deck";
+
+        const deckBase = `./decks/${deck.id}/`;
+        fetch(`${deckBase}slides.json`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error("slides.json request failed");
+            }
+            return response.json();
+          })
+          .then(slides => {
+            if (!Array.isArray(slides) || slides.length === 0) {
+              throw new Error("slides.json was empty");
+            }
+            slidesEl.innerHTML = slides
+              .map(slide => {
+                const titleMarkup = slide.title ? `<div class="slide-title">${slide.title}</div>` : "";
+                return `
+                  <section>
+                    ${titleMarkup}
+                    <iframe class="frame" src="${deckBase}${slide.src}" allow="fullscreen"></iframe>
+                  </section>
+                `;
+              })
+              .join("");
+
+            // Show a slide immediately, then upgrade to Reveal if it succeeds.
+            applyRevealFallback();
+
+            if (slidesEl.children.length === 0) {
+              document.body.classList.add("deck-empty");
+              deckFallbackEl.classList.remove("hidden");
+              deckFallbackEl.innerHTML = `
+                <div>
+                  <div class="fallback-title">${deck.title || "Deck"} (Fallback)</div>
+                  <p class="fallback-note">Slides failed to mount in Reveal. Showing direct embeds instead.</p>
+                </div>
+                <div class="fallback-grid">
+                  ${slides
+                    .map(
+                      slide => `
+                        <div class="fallback-card">
+                          <div class="slide-title">${slide.title || "Slide"}</div>
+                          <iframe src="${deckBase}${slide.src}" allow="fullscreen"></iframe>
+                        </div>
+                      `
+                    )
+                    .join("")}
+                </div>
+              `;
+              return;
+            }
+
+            if (typeof Reveal === "undefined") {
+              return;
+            }
+
+            try {
+              const init = Reveal.initialize({
+                hash: true,
+                controls: true,
+                progress: true,
+                transition: "slide"
+              });
+              if (init && typeof init.catch === "function") {
+                init.catch(() => {
+                  applyRevealFallback();
+                });
+              }
+              if (typeof Reveal.on === "function") {
+                Reveal.on("ready", () => {
+                  ensureSlideVisible();
+                });
+              }
+              window.setTimeout(() => {
+                ensureSlideVisible();
+              }, 700);
+            } catch (error) {
+              applyRevealFallback();
+            }
+          })
+          .catch(() => showError("Could not load slides for this deck."));
+      }
+
+      fetch("./decks.json")
+        .then(response => response.json())
+        .then(decks => {
+          if (!Array.isArray(decks) || decks.length === 0) {
+            showError("No decks configured in decks.json.");
+            return;
+          }
+          if (!requestedId) {
+            showHome(decks);
+            return;
+          }
+          const deck = decks.find(item => item.id === requestedId);
+          if (!deck) {
+            showError(`Deck "${requestedId}" not found.`);
+            return;
+          }
+          loadDeck(deck);
+        })
+        .catch(() => showError("Could not load decks.json."));
     </script>
   </body>
 </html>

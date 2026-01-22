@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Margin Map</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --navy: #002244;
+        --green: #69be28;
+        --gray: #a5acaf;
+        --ink: #0b0f14;
+        --foam: #eaf7ee;
+        --alert: #e86f5d;
+        --gold: #f9c74f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        height: 100vh;
+        background:
+          radial-gradient(900px 600px at 10% 20%, rgba(105, 190, 40, 0.18), transparent 60%),
+          radial-gradient(900px 600px at 90% 0%, rgba(0, 34, 68, 0.8), transparent 60%),
+          linear-gradient(140deg, #050f16, var(--ink) 70%);
+        color: var(--foam);
+        font-family: "Space Grotesk", sans-serif;
+        overflow: hidden;
+      }
+      .wrap {
+        height: 100vh;
+        width: 100vw;
+        display: grid;
+        grid-template-columns: 0.38fr 0.62fr;
+        gap: 18px;
+        padding: 28px 40px 24px;
+      }
+      .panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .title {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: clamp(2.4rem, 4vw, 3.4rem);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .subtitle {
+        margin: 0;
+        color: var(--gray);
+        line-height: 1.5;
+      }
+      .info {
+        padding: 12px 14px;
+        background: rgba(0, 34, 68, 0.55);
+        border-radius: 12px;
+        border: 1px solid rgba(105, 190, 40, 0.25);
+      }
+      .info strong {
+        color: var(--green);
+        font-weight: 600;
+      }
+      .game-list {
+        flex: 1;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .game-card {
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: rgba(2, 34, 68, 0.45);
+        border: 1px solid rgba(165, 172, 175, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+      .game-card.active {
+        border-color: var(--green);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+      }
+      .game-card .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .game-card .meta span {
+        font-size: 0.6rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--gray);
+      }
+      .game-card .score {
+        font-weight: 600;
+      }
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .toggle button {
+        border: none;
+        border-radius: 999px;
+        padding: 6px 14px;
+        background: rgba(0, 34, 68, 0.65);
+        color: var(--gray);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        cursor: pointer;
+        border: 1px solid rgba(105, 190, 40, 0.25);
+      }
+      .toggle button.active {
+        background: var(--gold);
+        color: #2b1d02;
+        border-color: transparent;
+      }
+      .chart {
+        height: 100%;
+        border-radius: 18px;
+        background: rgba(2, 34, 68, 0.35);
+        border: 1px solid rgba(105, 190, 40, 0.2);
+        padding: 10px;
+      }
+      @media (max-width: 960px) {
+        .wrap {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr;
+        }
+        .game-list {
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="panel">
+        <div>
+          <h1 class="title">Margin Map</h1>
+          <p class="subtitle">Pick a game to spotlight the swing. Gold highlights nail-biters.</p>
+        </div>
+        <div class="info" id="info">Select a game to see the margin detail.</div>
+        <div class="toggle">
+          <button id="toggleClose">Highlight nail-biters</button>
+        </div>
+        <div class="game-list" id="gameList"></div>
+      </div>
+      <div class="chart" id="chart"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+      const games = [
+        { week: 1, opponent: "49ers", location: "Home", result: "L", pf: 13, pa: 17 },
+        { week: 2, opponent: "Steelers", location: "Away", result: "W", pf: 31, pa: 17 },
+        { week: 3, opponent: "Saints", location: "Home", result: "W", pf: 44, pa: 13 },
+        { week: 4, opponent: "Cardinals", location: "Away", result: "W", pf: 23, pa: 20 },
+        { week: 5, opponent: "Buccaneers", location: "Home", result: "L", pf: 35, pa: 38 },
+        { week: 6, opponent: "Jaguars", location: "Away", result: "W", pf: 20, pa: 12 },
+        { week: 7, opponent: "Texans", location: "Home", result: "W", pf: 27, pa: 19 },
+        { week: 9, opponent: "Commanders", location: "Away", result: "W", pf: 38, pa: 14 },
+        { week: 10, opponent: "Cardinals", location: "Home", result: "W", pf: 44, pa: 22 },
+        { week: 11, opponent: "Rams", location: "Away", result: "L", pf: 19, pa: 21 },
+        { week: 12, opponent: "Titans", location: "Away", result: "W", pf: 30, pa: 24 },
+        { week: 13, opponent: "Vikings", location: "Home", result: "W", pf: 26, pa: 0 },
+        { week: 14, opponent: "Falcons", location: "Away", result: "W", pf: 37, pa: 9 },
+        { week: 15, opponent: "Colts", location: "Home", result: "W", pf: 18, pa: 16 },
+        { week: 16, opponent: "Rams", location: "Home", result: "W", pf: 38, pa: 37 },
+        { week: 17, opponent: "Panthers", location: "Away", result: "W", pf: 27, pa: 10 },
+        { week: 18, opponent: "49ers", location: "Away", result: "W", pf: 13, pa: 3 }
+      ];
+
+      const labels = games.map(game => `W${game.week}`);
+      const diffs = games.map(game => game.pf - game.pa);
+      const closeThreshold = 3;
+      let highlightClose = false;
+      let selectedIndex = 0;
+
+      const gameList = document.getElementById("gameList");
+      const info = document.getElementById("info");
+
+      function updateInfo(index) {
+        const game = games[index];
+        const diff = game.pf - game.pa;
+        info.innerHTML = `Week ${game.week} vs ${game.opponent} (${game.location})<br />
+          <strong>${game.result} ${game.pf}-${game.pa}</strong> · Margin ${diff > 0 ? "+" : ""}${diff}`;
+      }
+
+      function renderList() {
+        gameList.innerHTML = games
+          .map((game, index) => {
+            const diff = game.pf - game.pa;
+            return `
+              <div class="game-card" data-index="${index}">
+                <div class="meta">
+                  <span>Week ${game.week} · ${game.location}</span>
+                  <strong>${game.opponent}</strong>
+                </div>
+                <div class="score">${game.result} ${game.pf}-${game.pa}</div>
+              </div>
+            `;
+          })
+          .join("");
+
+        document.querySelectorAll(".game-card").forEach(card => {
+          card.addEventListener("click", () => {
+            selectGame(Number(card.dataset.index));
+          });
+        });
+      }
+
+      const chart = echarts.init(document.getElementById("chart"));
+
+      function barColor(params) {
+        const diff = diffs[params.dataIndex];
+        const isClose = Math.abs(diff) <= closeThreshold;
+        if (highlightClose) {
+          if (isClose) {
+            return "#f9c74f";
+          }
+          return diff >= 0 ? "rgba(105, 190, 40, 0.25)" : "rgba(232, 111, 93, 0.25)";
+        }
+        return diff >= 0 ? "#69be28" : "#e86f5d";
+      }
+
+      function renderChart() {
+        chart.setOption({
+          grid: { left: 46, right: 16, top: 24, bottom: 40 },
+          tooltip: {
+            trigger: "axis",
+            axisPointer: { type: "shadow" },
+            backgroundColor: "rgba(2, 34, 68, 0.92)",
+            borderColor: "#69be28",
+            textStyle: { color: "#eaf7ee" },
+            formatter: params => {
+              const index = params[0].dataIndex;
+              const game = games[index];
+              const diff = game.pf - game.pa;
+              return [
+                `Week ${game.week} vs ${game.opponent} (${game.location})`,
+                `${game.result} ${game.pf}-${game.pa}`,
+                `Margin: ${diff > 0 ? "+" : ""}${diff}`
+              ].join("<br />");
+            }
+          },
+          xAxis: {
+            type: "category",
+            data: labels,
+            axisLine: { lineStyle: { color: "rgba(165, 172, 175, 0.35)" } },
+            axisLabel: { color: "#a5acaf" }
+          },
+          yAxis: {
+            type: "value",
+            axisLabel: { color: "#a5acaf" },
+            splitLine: { lineStyle: { color: "rgba(165, 172, 175, 0.12)" } }
+          },
+          dataZoom: [{ type: "inside" }, { type: "slider", height: 18, bottom: 10 }],
+          series: [
+            {
+              type: "bar",
+              data: diffs,
+              itemStyle: { color: barColor },
+              barWidth: 18,
+              markLine: {
+                symbol: "none",
+                lineStyle: { color: "rgba(165, 172, 175, 0.5)" },
+                label: { show: false },
+                data: [{ yAxis: 0 }]
+              }
+            }
+          ]
+        }, true);
+      }
+
+      function selectGame(index) {
+        selectedIndex = index;
+        document.querySelectorAll(".game-card").forEach(card => {
+          card.classList.toggle("active", Number(card.dataset.index) === index);
+        });
+        updateInfo(index);
+        chart.dispatchAction({ type: "downplay", seriesIndex: 0 });
+        chart.dispatchAction({ type: "highlight", seriesIndex: 0, dataIndex: index });
+        chart.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: index });
+      }
+
+      renderList();
+      renderChart();
+      selectGame(0);
+
+      window.addEventListener("resize", () => chart.resize());
+
+      const toggleButton = document.getElementById("toggleClose");
+      toggleButton.addEventListener("click", () => {
+        highlightClose = !highlightClose;
+        toggleButton.classList.toggle("active", highlightClose);
+        renderChart();
+        selectGame(selectedIndex);
+      });
+    </script>
+  </body>
+</html>

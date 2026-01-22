@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Offense vs Defense</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Teko:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --navy: #002244;
+        --green: #69be28;
+        --gray: #a5acaf;
+        --ink: #0b0f14;
+        --foam: #edf9f0;
+        --alert: #e86f5d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        height: 100vh;
+        background:
+          radial-gradient(900px 500px at 15% 10%, rgba(0, 34, 68, 0.85), transparent 60%),
+          radial-gradient(1100px 800px at 95% -10%, rgba(105, 190, 40, 0.22), transparent 60%),
+          linear-gradient(130deg, #050f16, var(--ink) 70%);
+        color: var(--foam);
+        font-family: "Space Grotesk", sans-serif;
+        overflow: hidden;
+      }
+      .wrap {
+        height: 100vh;
+        width: 100vw;
+        padding: 30px 44px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .title {
+        font-family: "Teko", sans-serif;
+        font-size: clamp(2.2rem, 4vw, 3.5rem);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin: 0 0 4px;
+      }
+      .subtitle {
+        margin: 0;
+        color: var(--gray);
+      }
+      .toggle {
+        display: flex;
+        gap: 10px;
+        background: rgba(0, 34, 68, 0.55);
+        padding: 6px;
+        border-radius: 999px;
+        border: 1px solid rgba(105, 190, 40, 0.35);
+      }
+      .toggle button {
+        border: none;
+        background: transparent;
+        color: var(--gray);
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .toggle button.active {
+        background: var(--green);
+        color: #00140b;
+        font-weight: 600;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
+        gap: 12px;
+      }
+      .stat {
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: rgba(0, 34, 68, 0.55);
+        border: 1px solid rgba(105, 190, 40, 0.2);
+      }
+      .stat .label {
+        color: var(--gray);
+        font-size: 0.65rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .stat .value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--green);
+      }
+      .chart {
+        flex: 1;
+        min-height: 0;
+        border-radius: 18px;
+        background: rgba(2, 34, 68, 0.35);
+        border: 1px solid rgba(105, 190, 40, 0.2);
+        padding: 12px;
+      }
+      @media (max-width: 960px) {
+        .stats {
+          grid-template-columns: repeat(2, minmax(150px, 1fr));
+        }
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div>
+          <h1 class="title">Offense vs Defense</h1>
+          <p class="subtitle">Toggle to compare weekly scoring or see the margin per game.</p>
+        </div>
+        <div class="toggle">
+          <button class="mode active" data-mode="totals">Totals</button>
+          <button class="mode" data-mode="differential">Differential</button>
+        </div>
+      </div>
+
+      <div class="stats" id="stats"></div>
+      <div class="chart" id="chart"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+      const games = [
+        { week: 1, opponent: "49ers", location: "Home", result: "L", pf: 13, pa: 17 },
+        { week: 2, opponent: "Steelers", location: "Away", result: "W", pf: 31, pa: 17 },
+        { week: 3, opponent: "Saints", location: "Home", result: "W", pf: 44, pa: 13 },
+        { week: 4, opponent: "Cardinals", location: "Away", result: "W", pf: 23, pa: 20 },
+        { week: 5, opponent: "Buccaneers", location: "Home", result: "L", pf: 35, pa: 38 },
+        { week: 6, opponent: "Jaguars", location: "Away", result: "W", pf: 20, pa: 12 },
+        { week: 7, opponent: "Texans", location: "Home", result: "W", pf: 27, pa: 19 },
+        { week: 9, opponent: "Commanders", location: "Away", result: "W", pf: 38, pa: 14 },
+        { week: 10, opponent: "Cardinals", location: "Home", result: "W", pf: 44, pa: 22 },
+        { week: 11, opponent: "Rams", location: "Away", result: "L", pf: 19, pa: 21 },
+        { week: 12, opponent: "Titans", location: "Away", result: "W", pf: 30, pa: 24 },
+        { week: 13, opponent: "Vikings", location: "Home", result: "W", pf: 26, pa: 0 },
+        { week: 14, opponent: "Falcons", location: "Away", result: "W", pf: 37, pa: 9 },
+        { week: 15, opponent: "Colts", location: "Home", result: "W", pf: 18, pa: 16 },
+        { week: 16, opponent: "Rams", location: "Home", result: "W", pf: 38, pa: 37 },
+        { week: 17, opponent: "Panthers", location: "Away", result: "W", pf: 27, pa: 10 },
+        { week: 18, opponent: "49ers", location: "Away", result: "W", pf: 13, pa: 3 }
+      ];
+
+      const labels = games.map(game => `W${game.week}`);
+      const pointsFor = games.map(game => game.pf);
+      const pointsAgainst = games.map(game => game.pa);
+      const diffs = games.map(game => game.pf - game.pa);
+
+      const totals = games.reduce(
+        (acc, game) => {
+          acc.pf += game.pf;
+          acc.pa += game.pa;
+          return acc;
+        },
+        { pf: 0, pa: 0 }
+      );
+      totals.diff = totals.pf - totals.pa;
+      totals.avgMargin = totals.diff / games.length;
+
+      const statsEl = document.getElementById("stats");
+      statsEl.innerHTML = [
+        { label: "Points For", value: totals.pf },
+        { label: "Points Against", value: totals.pa },
+        { label: "Point Diff", value: `${totals.diff}` },
+        { label: "Avg Margin", value: totals.avgMargin.toFixed(1) }
+      ]
+        .map(stat => `
+          <div class="stat">
+            <div class="label">${stat.label}</div>
+            <div class="value">${stat.value}</div>
+          </div>
+        `)
+        .join("");
+
+      const chart = echarts.init(document.getElementById("chart"));
+      let currentMode = "totals";
+
+      const baseOption = {
+        grid: { left: 44, right: 20, top: 20, bottom: 40 },
+        tooltip: {
+          trigger: "axis",
+          backgroundColor: "rgba(2, 34, 68, 0.92)",
+          borderColor: "#69be28",
+          textStyle: { color: "#edf9f0" },
+          axisPointer: { type: "shadow" },
+          formatter: params => {
+            const index = Array.isArray(params) ? params[0].dataIndex : params.dataIndex;
+            const game = games[index];
+            if (currentMode === "totals") {
+              return [
+                `Week ${game.week} vs ${game.opponent} (${game.location})`,
+                `${game.result} ${game.pf}-${game.pa}`,
+                `For: ${game.pf} · Against: ${game.pa}`
+              ].join("<br />");
+            }
+            const diff = game.pf - game.pa;
+            return [
+              `Week ${game.week} vs ${game.opponent} (${game.location})`,
+              `${game.result} ${game.pf}-${game.pa}`,
+              `Margin: ${diff > 0 ? "+" : ""}${diff}`
+            ].join("<br />");
+          }
+        },
+        xAxis: {
+          type: "category",
+          data: labels,
+          axisLine: { lineStyle: { color: "rgba(165, 172, 175, 0.35)" } },
+          axisLabel: { color: "#a5acaf" }
+        },
+        yAxis: {
+          type: "value",
+          axisLabel: { color: "#a5acaf" },
+          splitLine: { lineStyle: { color: "rgba(165, 172, 175, 0.12)" } }
+        },
+        dataZoom: [{ type: "inside" }, { type: "slider", height: 18, bottom: 10 }]
+      };
+
+      function renderChart() {
+        if (currentMode === "totals") {
+          chart.setOption({
+            ...baseOption,
+            legend: {
+              data: ["Points For", "Points Against"],
+              textStyle: { color: "#a5acaf" },
+              top: 0
+            },
+            series: [
+              {
+                name: "Points For",
+                type: "bar",
+                data: pointsFor,
+                itemStyle: { color: "#69be28" },
+                barWidth: 16
+              },
+              {
+                name: "Points Against",
+                type: "bar",
+                data: pointsAgainst,
+                itemStyle: { color: "#a5acaf" },
+                barWidth: 16
+              }
+            ]
+          }, true);
+        } else {
+          chart.setOption({
+            ...baseOption,
+            legend: { show: false },
+            series: [
+              {
+                name: "Margin",
+                type: "bar",
+                data: diffs,
+                itemStyle: {
+                  color: params => (params.value >= 0 ? "#69be28" : "#e86f5d")
+                },
+                barWidth: 18
+              }
+            ]
+          }, true);
+        }
+      }
+
+      renderChart();
+      window.addEventListener("resize", () => chart.resize());
+
+      document.querySelectorAll(".mode").forEach(button => {
+        button.addEventListener("click", () => {
+          currentMode = button.dataset.mode;
+          document.querySelectorAll(".mode").forEach(btn => {
+            btn.classList.toggle("active", btn === button);
+          });
+          renderChart();
+        });
+      });
+    </script>
+  </body>
+</html>

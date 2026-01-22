@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Emerald Arc</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Space+Grotesk:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --navy: #002244;
+        --green: #69be28;
+        --gray: #a5acaf;
+        --ink: #0b0f14;
+        --foam: #eaf7ee;
+        --alert: #e86f5d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        height: 100vh;
+        background:
+          radial-gradient(1100px 700px at 15% -20%, rgba(105, 190, 40, 0.25), transparent 60%),
+          radial-gradient(900px 500px at 90% 10%, rgba(0, 34, 68, 0.7), transparent 55%),
+          linear-gradient(135deg, #050f16, var(--ink) 60%);
+        color: var(--foam);
+        font-family: "Space Grotesk", sans-serif;
+        overflow: hidden;
+      }
+      .wrap {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding: 32px 46px 26px;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 24px;
+      }
+      .kicker {
+        text-transform: uppercase;
+        letter-spacing: 0.4em;
+        font-size: 0.65rem;
+        color: var(--gray);
+      }
+      h1 {
+        margin: 6px 0 6px;
+        font-family: "Rajdhani", sans-serif;
+        font-weight: 700;
+        font-size: clamp(2rem, 4vw, 3.6rem);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .subtitle {
+        margin: 0;
+        color: var(--gray);
+        max-width: 520px;
+        line-height: 1.5;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+        gap: 12px;
+      }
+      .stat {
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: rgba(0, 34, 68, 0.55);
+        border: 1px solid rgba(105, 190, 40, 0.35);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+      }
+      .stat .label {
+        font-size: 0.7rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--gray);
+      }
+      .stat .value {
+        font-size: 1.65rem;
+        font-weight: 600;
+        color: var(--green);
+      }
+      .chart {
+        flex: 1;
+        min-height: 0;
+        border-radius: 18px;
+        background: rgba(2, 34, 68, 0.35);
+        border: 1px solid rgba(105, 190, 40, 0.22);
+        padding: 12px;
+      }
+      .note {
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.65rem;
+        color: var(--gray);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <div>
+          <div class="kicker">Seattle Seahawks · 2025 Regular Season</div>
+          <h1>Emerald Arc</h1>
+          <p class="subtitle">A slow start, a surge midseason, and a closing sprint. Hover the line to replay the climb.</p>
+        </div>
+        <div class="stats" id="stats"></div>
+      </div>
+      <div class="chart" id="chart"></div>
+      <div class="note">Bye Week 8 · Scroll or drag to zoom</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+      const games = [
+        { week: 1, opponent: "49ers", location: "Home", result: "L", pf: 13, pa: 17 },
+        { week: 2, opponent: "Steelers", location: "Away", result: "W", pf: 31, pa: 17 },
+        { week: 3, opponent: "Saints", location: "Home", result: "W", pf: 44, pa: 13 },
+        { week: 4, opponent: "Cardinals", location: "Away", result: "W", pf: 23, pa: 20 },
+        { week: 5, opponent: "Buccaneers", location: "Home", result: "L", pf: 35, pa: 38 },
+        { week: 6, opponent: "Jaguars", location: "Away", result: "W", pf: 20, pa: 12 },
+        { week: 7, opponent: "Texans", location: "Home", result: "W", pf: 27, pa: 19 },
+        { week: 9, opponent: "Commanders", location: "Away", result: "W", pf: 38, pa: 14 },
+        { week: 10, opponent: "Cardinals", location: "Home", result: "W", pf: 44, pa: 22 },
+        { week: 11, opponent: "Rams", location: "Away", result: "L", pf: 19, pa: 21 },
+        { week: 12, opponent: "Titans", location: "Away", result: "W", pf: 30, pa: 24 },
+        { week: 13, opponent: "Vikings", location: "Home", result: "W", pf: 26, pa: 0 },
+        { week: 14, opponent: "Falcons", location: "Away", result: "W", pf: 37, pa: 9 },
+        { week: 15, opponent: "Colts", location: "Home", result: "W", pf: 18, pa: 16 },
+        { week: 16, opponent: "Rams", location: "Home", result: "W", pf: 38, pa: 37 },
+        { week: 17, opponent: "Panthers", location: "Away", result: "W", pf: 27, pa: 10 },
+        { week: 18, opponent: "49ers", location: "Away", result: "W", pf: 13, pa: 3 }
+      ];
+
+      const labels = games.map(game => `W${game.week}`);
+      let wins = 0;
+      let losses = 0;
+      const records = [];
+      const cumulativeWins = games.map(game => {
+        if (game.result === "W") {
+          wins += 1;
+        } else {
+          losses += 1;
+        }
+        records.push(`${wins}-${losses}`);
+        return wins;
+      });
+
+      const totals = games.reduce(
+        (acc, game) => {
+          acc.pf += game.pf;
+          acc.pa += game.pa;
+          return acc;
+        },
+        { pf: 0, pa: 0 }
+      );
+
+      const statsEl = document.getElementById("stats");
+      statsEl.innerHTML = [
+        { label: "Record", value: `${wins}-${losses}` },
+        { label: "Points For", value: totals.pf },
+        { label: "Points Against", value: totals.pa },
+        { label: "Point Diff", value: `${totals.pf - totals.pa}` }
+      ]
+        .map(stat => `
+          <div class="stat">
+            <div class="label">${stat.label}</div>
+            <div class="value">${stat.value}</div>
+          </div>
+        `)
+        .join("");
+
+      const lossPoints = games
+        .map((game, index) => (game.result === "L" ? [index, cumulativeWins[index]] : null))
+        .filter(Boolean);
+
+      const chart = echarts.init(document.getElementById("chart"));
+
+      const option = {
+        grid: { left: 40, right: 26, top: 24, bottom: 48 },
+        tooltip: {
+          trigger: "axis",
+          backgroundColor: "rgba(2, 34, 68, 0.92)",
+          borderColor: "#69be28",
+          textStyle: { color: "#eaf7ee" },
+          formatter: params => {
+            const index = params[0].dataIndex;
+            const game = games[index];
+            return [
+              `Week ${game.week} vs ${game.opponent} (${game.location})`,
+              `${game.result} ${game.pf}-${game.pa}`,
+              `Record: ${records[index]}`
+            ].join("<br />");
+          }
+        },
+        xAxis: {
+          type: "category",
+          data: labels,
+          axisLine: { lineStyle: { color: "rgba(165, 172, 175, 0.4)" } },
+          axisLabel: { color: "#a5acaf" }
+        },
+        yAxis: {
+          type: "value",
+          min: 0,
+          max: 14,
+          interval: 2,
+          axisLabel: { color: "#a5acaf" },
+          splitLine: { lineStyle: { color: "rgba(165, 172, 175, 0.12)" } }
+        },
+        dataZoom: [
+          { type: "inside" },
+          {
+            type: "slider",
+            height: 18,
+            bottom: 10,
+            borderColor: "rgba(105, 190, 40, 0.4)",
+            fillerColor: "rgba(105, 190, 40, 0.18)",
+            handleStyle: { color: "#69be28" },
+            textStyle: { color: "#a5acaf" }
+          }
+        ],
+        series: [
+          {
+            name: "Wins",
+            type: "line",
+            data: cumulativeWins,
+            smooth: true,
+            symbol: "circle",
+            symbolSize: 8,
+            lineStyle: { color: "#69be28", width: 3 },
+            itemStyle: { color: "#69be28" },
+            areaStyle: { color: "rgba(105, 190, 40, 0.18)" }
+          },
+          {
+            name: "Loss",
+            type: "scatter",
+            data: lossPoints,
+            symbol: "diamond",
+            symbolSize: 14,
+            itemStyle: { color: "#e86f5d" }
+          }
+        ]
+      };
+
+      chart.setOption(option);
+      window.addEventListener("resize", () => chart.resize());
+    </script>
+  </body>
+</html>
